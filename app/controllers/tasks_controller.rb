@@ -1,8 +1,15 @@
 class TasksController < ApplicationController
   before_action :set_task, only:[:show, :edit, :update, :destroy]
+  before_action :require_user_logged_in
   
   def index
-    @tasks = Task.all.page(params[:page])
+    #@tasks = Task.all.page(params[:page])
+    
+    if logged_in?
+      @task = current_user.tasks.build  # form_for 用
+      @tasks = current_user.tasks.order('created_at DESC').page(params[:page])
+    end
+    
   end
   
   def show
@@ -13,14 +20,14 @@ class TasksController < ApplicationController
   end
   
   def create
-    @task = Task.new(task_params)
-    
+    @task = current_user.tasks.build(task_params)
     if @task.save
-      flash[:success] = "タスクを登録しました"
-      redirect_to @task
+      flash[:success] = 'メッセージを投稿しました。'
+      redirect_to root_url
     else
-      flash.now[:danger] = "タスクの登録に失敗しました"
-      render :new
+      @tasks = current_user.tasks.order('created_at DESC').page(params[:page])
+      flash.now[:danger] = 'メッセージの投稿に失敗しました。'
+      render 'toppages/index'
     end
   end
   
@@ -54,4 +61,5 @@ class TasksController < ApplicationController
   def task_params
     params.require(:task).permit(:content, :status)
   end
+  
 end
